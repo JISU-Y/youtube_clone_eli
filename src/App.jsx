@@ -1,9 +1,23 @@
 import React, { useState, useEffect } from "react"
-import "./App.css"
+import styles from "./App.module.css"
+import SearchHeader from "./components/Search_header/Search_header"
 import VideoList from "./components/Video_list/Video_list"
 
-function App() {
+// index에서 가져온 youtube class를 dependeny 받아온다.
+function App({ youtube }) {
   const [videos, setVideos] = useState([])
+  // MVC 디자인 패턴에서 (React가 가장 많이 사용되는) View를 담당하는 부분은
+  // 화면에 나타나는 부분만 담당해야한다.
+  // View에서 비즈니스 로직처리, 데이터 통신 등 다 하도록 만들면 안된다.
+  // 따라서 이런 데이터 통신 등 비슷한 역할끼리 묵어서 class로 만들고,
+  // 필요한 컴포넌트에 주입하면(dependency injection) 된다.
+  // 또한 key같은 credential은 코드안에 남겨두지 말것
+  const search = (query) => {
+    // 받아온 youtube class에 있는 search 함수 실행함으로써 데이터 받아오게 시킴
+    youtube
+      .search(query) //
+      .then((videos) => setVideos(videos)) // 받아온 videos list를 Video state에 set
+  }
 
   useEffect(() => {
     // 마운트되거나 업데이트 될 때마다 실행
@@ -12,22 +26,16 @@ function App() {
     // 아무것도 안적으면 마운트/업데이트 될 때마다 매번
     // 안에 배열에 요소가 있으면 그 요소(state)가 변할 때마다 실행
     // 그것은 바로 video data fetch
-    const requestOptions = {
-      method: "GET",
-      redirect: "follow",
-    }
-
-    // fetch 요청해서 response 받으면 그걸 json형태로 변환하고
-    // video state에다가 result의 items(video data들 있는 것)를 set 해준다
-    fetch(
-      "https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&maxResults=25&key=AIzaSyDJlUNwhtfVn9v8IjAGQDsOoZRzQ5dBlFQ",
-      requestOptions
-    )
-      .then((response) => response.json())
-      .then((result) => setVideos(result.items))
-      .catch((error) => console.log("error", error))
+    youtube
+      .mostPopular() //
+      .then((videos) => setVideos(videos))
   }, [])
-  return <VideoList videos={videos} />
+  return (
+    <div className={styles.app}>
+      <SearchHeader onSearch={search} />
+      <VideoList videos={videos} />
+    </div>
+  )
 }
 
 export default App
