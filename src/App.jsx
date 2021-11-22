@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from "react"
 import styles from "./App.module.css"
 import SearchHeader from "./components/Search_header/Search_header"
+import VideoDetail from "./components/video_detail/Video_detail"
 import VideoList from "./components/Video_list/Video_list"
 
 // index에서 가져온 youtube class를 dependeny 받아온다.
 function App({ youtube }) {
   const [videos, setVideos] = useState([])
+  const [selectedVideo, setSelectedVideo] = useState(null)
+
+  const selectVideo = (video) => {
+    setSelectedVideo(video)
+  }
+
   // MVC 디자인 패턴에서 (React가 가장 많이 사용되는) View를 담당하는 부분은
   // 화면에 나타나는 부분만 담당해야한다.
   // View에서 비즈니스 로직처리, 데이터 통신 등 다 하도록 만들면 안된다.
@@ -14,9 +21,15 @@ function App({ youtube }) {
   // 또한 key같은 credential은 코드안에 남겨두지 말것
   const search = (query) => {
     // 받아온 youtube class에 있는 search 함수 실행함으로써 데이터 받아오게 시킴
+
+    setSelectedVideo(null) // 검색 결과 초기화(검색해서 detail 클릭하면 grid가 안바뀌니까)
+    // 스피너를 넣어도 됨
+    // 혹은 데이터에 문제가 있거나 없는 경우에 error 혹은 기타 구현으로 처리해도 됨
     youtube
       .search(query) //
-      .then((videos) => setVideos(videos)) // 받아온 videos list를 Video state에 set
+      .then((videos) => {
+        setVideos(videos)
+      }) // 받아온 videos list를 Video state에 set
   }
 
   useEffect(() => {
@@ -30,10 +43,21 @@ function App({ youtube }) {
       .mostPopular() //
       .then((videos) => setVideos(videos))
   }, [])
+
   return (
     <div className={styles.app}>
       <SearchHeader onSearch={search} />
-      <VideoList videos={videos} />
+      <section className={styles.content}>
+        {selectedVideo && (
+          <div className={styles.detail}>
+            <VideoDetail video={selectedVideo} />
+          </div>
+        )}
+
+        <div className={styles.list}>
+          <VideoList videos={videos} onVideoClick={selectVideo} display={selectedVideo ? "list" : "grid"} />
+        </div>
+      </section>
     </div>
   )
 }
